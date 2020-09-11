@@ -118,17 +118,13 @@ int main(int argc, char * const * argv){
         else if (pid == 0){
             int average = (getppid() + getpid()) / 2;
             printf("Estamos en el proceso hijo con PID = %d, su padre es PPID = %d y su promedio es %d\n", getpid(), getppid(), average);
-            
             sleep(1);
-
             exit(average);
         }
-
         else {
             ++newChild;
             printf("Hijos creados: %d\n\n", newChild);
         }
-
         ++pos;
         ++i;
     }

@@ -24,7 +24,7 @@ $promedio debe sustituirse por el resultado de calcular el promedio entre el PID
 del proceso padre.
 Al terminar, debe regresar el promedio calculado como valor de retorno  al proceso padre.
 
-Edgar Garcia Con colaboración junto a Rafael Miranda */
+Edgar Garcia Con colaboración junto a Rafael Miranda para ver estrcuctura del programa*/
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -32,11 +32,11 @@ Edgar Garcia Con colaboración junto a Rafael Miranda */
 
 typedef struct
 {
+	pid_t value;
     pid_t average;
-    pid_t id;
 } child;
 
-void showAster(int, int);
+void showStarts(int, int);
 //Funcion Main
 int main(int argc, char const *argv[])
 {
@@ -44,7 +44,7 @@ int main(int argc, char const *argv[])
     if(argc > 1){
         children = atoi(argv[1]);
     }else{
-        printf("Por favor introduce el numero de procesos hijos a crear.\n");
+        printf("Por favor introduce el numero de procesos hijos a crear al momento de correr el programa.\n");
         return -1;
     }
     pid_t pid;
@@ -57,14 +57,14 @@ int main(int argc, char const *argv[])
         pid = fork();
         if (pid == 0){
             sleep(1);
-            printf("Proceso hijo con PID = %d y  promedio es = %d\n", getpid(), (getpid() + parentPID) / 2);
+            printf("Proceso hijo con PID = %d  Promedio es = %d\n", getpid(), (getpid() + parentPID) / 2);
             exit(0);
         }else if (pid == -1){
-            flag->id = 0;
+            flag->value = 0;
             printf("Hubo un error creando proces hijo. Numero de procesos hijos creados hasta ahora: %d\n", i + 1);
             break;
         }else{
-            flag->id = pid;
+            flag->value = pid;
             flag->average = rand() % 10;
         }        
         i++;
@@ -75,11 +75,10 @@ int main(int argc, char const *argv[])
     pid_t biggest = 0;
 
     for (flag = pidAverages; flag < final; ++flag){
-        waitpid(flag->id, NULL, 0);
+        waitpid(flag->value, NULL, 0);
         if (flag->average > biggest){
             biggest = flag->average;
         }
-        
     }
 	/*
 	PID Hijo	Promedio	Histograma
@@ -87,19 +86,19 @@ int main(int argc, char const *argv[])
 	10	15	**************
 	50	35	*****************************
 	60	40	***************************************/
-    printf("PID Hijo\t\tPromedio\t\tHistograma\n");
+    printf("PID Hijo\tPromedio\tHistograma\n");
     for (flag = pidAverages; flag < final; ++flag){
-        printf("%d\t\t\t%d\t\t\t", flag->id, flag->average);
-        showAster(flag->average, biggest);
+        printf("%d\t\t\t%d\t\t\t", flag->value, flag->average);
+        showStarts(flag->average, biggest);
     }
-    //
+    //Memoria Liberada
     free(pidAverages);
-
     return 0;
 }
 
-/*	10	15	***************/
-void showAster(int average, int biggestAverage){
+/* 
+	10	15	***************/
+void showStarts(int average, int biggestAverage){
     float size = (average * 10) /biggestAverage;
     for (int i = 0; i < size; ++i){
         printf("*");

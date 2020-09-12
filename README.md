@@ -1,7 +1,7 @@
 Para correr el programa en terminal solo se necesitan los siguinetes comandos:
- 1.- gcc main.c
+1.- gcc main.c
 Una vez que cree el ejecutable poner el numero de hijos a crear
- 2.- ./a.out 10
+2.- ./a.out 10
 Ya que si no se pone la cantidad de hijos lanzara el siguiente mensaje
   Por favor introduce el numero de procesos hijos a crear al momento de correr el programa.
 

@@ -24,138 +24,85 @@ $promedio debe sustituirse por el resultado de calcular el promedio entre el PID
 del proceso padre.
 Al terminar, debe regresar el promedio calculado como valor de retorno  al proceso padre.
 
-Edgar Garcia
-Trabajo junto a Rafael Miranda
-
- */
+Edgar Garcia Con colaboración junto a Rafael Miranda */
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
-#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 
-typedef struct {
-    int id;
-    int average;
-} Child;
+typedef struct
+{
+    pid_t average;
+    pid_t id;
+} child;
 
-void histograma(Child * childs, Child * fin){
-    int maximo = 0;
-    for (Child * h = childs; h < fin; ++h){
-        if (h->average > maximo){
-            maximo = h->average;
-        }
+void showAster(int, int);
+//Funcion Main
+int main(int argc, char const *argv[])
+{
+    int children = 0;
+    if(argc > 1){
+        children = atoi(argv[1]);
+    }else{
+        printf("Por favor introduce el numero de procesos hijos a crear.\n");
+        return -1;
     }
-    printf("PID Hijo \tPromedio \tHistograma\n\n");
+    pid_t pid;
+    child *pidAverages = (child *)malloc(children * sizeof(child));
+    pid_t parentPID = getpid();
+    int i = 0;
+    child *flag = pidAverages;
 
-    for (Child * h = childs; h < fin; ++h){
-        printf("%d \t\t%d \t\t", h->id, h->average);
-        for (int i = 0; i < ((h->average * 5) / maximo); ++i){
-            printf("*");
-        }
-        printf("\n\n");
+    while (i < children){
+        pid = fork();
+        if (pid == 0){
+            sleep(1);
+            printf("Proceso hijo con PID = %d y  promedio es = %d\n", getpid(), (getpid() + parentPID) / 2);
+            exit(0);
+        }else if (pid == -1){
+            flag->id = 0;
+            printf("Hubo un error creando proces hijo. Numero de procesos hijos creados hasta ahora: %d\n", i + 1);
+            break;
+        }else{
+            flag->id = pid;
+            flag->average = rand() % 10;
+        }        
+        i++;
+        flag++;
     }
+
+    child *final = pidAverages + children;
+    pid_t biggest = 0;
+
+    for (flag = pidAverages; flag < final; ++flag){
+        waitpid(flag->id, NULL, 0);
+        if (flag->average > biggest){
+            biggest = flag->average;
+        }
+        
+    }
+	/*
+	PID Hijo	Promedio	Histograma
+	20	20	********************
+	10	15	**************
+	50	35	*****************************
+	60	40	***************************************/
+    printf("PID Hijo\t\tPromedio\t\tHistograma\n");
+    for (flag = pidAverages; flag < final; ++flag){
+        printf("%d\t\t\t%d\t\t\t", flag->id, flag->average);
+        showAster(flag->average, biggest);
+    }
+    //
+    free(pidAverages);
+
+    return 0;
 }
 
-int main(int argc, char * const * argv){
-    int date;
-    int numberChild;
-    char * cvalue = NULL;
-
-    opterr = 0;
-
-    while ((date = getopt(argc, argv, "n:")) != -1){
-        switch (date){
-            case 'n':
-                cvalue = optarg;
-
-                if (isdigit(*cvalue) > 0){
-                    numberChild = atoi(cvalue);
-                    printf("Cantidad de hijos: %d\n\n", numberChild);
-                }
-
-                else {
-                    printf("No proporcionó un valor numérico\n");
-                }
-            break;
-
-            case '?':
-                if (optopt == 'n'){
-                    fprintf(stderr, "Opción -%c requiere un argumento.\n", optopt);
-                }
-                else if (isprint (optopt)){
-                    fprintf (stderr, "Opción desconocida '-%c'.\n", optopt);
-                }   
-                else {
-                    fprintf (stderr, "Opción desconocida '\\x%x'.\n", optopt);
-                }
-                return 1;
-            default:
-                abort();
-            break;
-        }
+/*	10	15	***************/
+void showAster(int average, int biggestAverage){
+    float size = (average * 10) /biggestAverage;
+    for (int i = 0; i < size; ++i){
+        printf("*");
     }
-
-    pid_t * ids = malloc(sizeof(pid_t) * numberChild);
-    pid_t * total = ids + numberChild;
-    pid_t * pos = ids;
-    int i = 0;
-    int newChild = 0;
-    int averageVal;
-    pid_t pid;
-
-    while ((pos < total) && (i < numberChild)){
-        pid = fork();
-        *pos = pid;
-
-        if (pid == -1){
-            printf("Hubo un error al crear el proceso hijo %d\n", i);
-            printf("Procesos hijos creados hasta el momento: %d\n\n", newChild);
-
-            break;
-        }
-
-        else if (pid == 0){
-            int average = (getppid() + getpid()) / 2;
-            printf("Estamos en el proceso hijo con PID = %d, su padre es PPID = %d y su promedio es %d\n", getpid(), getppid(), average);
-            sleep(1);
-            exit(average);
-        }
-        else {
-            ++newChild;
-            printf("Hijos creados: %d\n\n", newChild);
-        }
-        ++pos;
-        ++i;
-    }
-
-    if (newChild == 0){
-        printf("No se pudo crear más de un hijo.");
-        free(ids);
-        return 0;
-    }
-
-    else if (newChild > 0){
-        Child * childs = (Child *) malloc(sizeof(Child) * newChild);
-        Child * fin = childs + newChild;
-        Child * h = childs;
-        pos = ids;
-
-        while ((h < fin) && (pos < total)){
-            if (waitpid(*pos, &averageVal, 0) != -1){
-                if (WIFEXITED(averageVal)){
-                    h->id = *pos;
-                    h->average = WEXITSTATUS(averageVal);
-                }
-            }
-
-            ++pos;
-            ++h;
-        }
-        printf("\n");
-        histograma(childs, fin);
-        free(ids);
-        free(childs);
-        return 0;
-    }
+    printf("\n");
 }
